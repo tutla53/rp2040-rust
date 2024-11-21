@@ -1,49 +1,41 @@
+//! This example shows how to create a pwm using the PIO module in the RP2040 chip.
+
 #![no_std]
 #![no_main]
-/// This example demonstrates how to access a given pin from more than one embassy task
-/// The on-board LED is toggled by two tasks with slightly different periods, leading to the
-/// apparent duty cycle of the LED increasing, then decreasing, linearly. The phenomenon is similar
-/// to interference and the 'beats' you can hear if you play two frequencies close to one another
-/// [Link explaining it](https://www.physicsclassroom.com/class/sound/Lesson-3/Interference-and-Beats)
-use defmt::*;
+use core::time::Duration;
+
 use embassy_executor::Spawner;
-use embassy_rp::gpio;
-use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex;
-use embassy_sync::mutex::Mutex;
-use embassy_time::{Duration, Ticker};
-use gpio::{AnyPin, Level, Output};
+use embassy_rp::bind_interrupts;
+use embassy_rp::peripherals::PIO0;
+use embassy_rp::pio::{InterruptHandler, Pio};
+use embassy_rp::pio_programs::pwm::{PioPwm, PioPwmProgram};
+use embassy_time::Timer;
 use {defmt_rtt as _, panic_probe as _};
 
-type LedType = Mutex<ThreadModeRawMutex, Option<Output<'static>>>;
-static LED: LedType = Mutex::new(None);
+const REFRESH_INTERVAL: u64 = 20000;
+
+bind_interrupts!(struct Irqs {
+    PIO0_IRQ_0 => InterruptHandler<PIO0>;
+});
 
 #[embassy_executor::main]
-async fn main(spawner: Spawner) {
+async fn main(_spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
-    // set the content of the global LED reference to the real LED pin
-    let led = Output::new(AnyPin::from(p.PIN_25), Level::High);
-    // inner scope is so that once the mutex is written to, the MutexGuard is dropped, thus the
-    // Mutex is released
-    {
-        *(LED.lock().await) = Some(led);
-    }
-    let dt = 100 * 1_000_000;
-    let k = 1.003;
+    let Pio { mut common, sm0, .. } = Pio::new(p.PIO0, Irqs);
 
-    unwrap!(spawner.spawn(toggle_led(&LED, Duration::from_nanos(dt))));
-    unwrap!(spawner.spawn(toggle_led(&LED, Duration::from_nanos((dt as f64 * k) as u64))));
-}
+    // Note that PIN_25 is the led pin on the Pico
+    let prg = PioPwmProgram::new(&mut common);
+    let mut pwm_pio = PioPwm::new(&mut common, sm0, p.PIN_25, &prg);
+    pwm_pio.set_period(Duration::from_micros(REFRESH_INTERVAL));
+    pwm_pio.start();
 
-#[embassy_executor::task(pool_size = 2)]
-async fn toggle_led(led: &'static LedType, delay: Duration) {
-    let mut ticker = Ticker::every(delay);
+    let mut add: i16 = 10;
+    let mut duration = add;
     loop {
-        {
-            let mut led_unlocked = led.lock().await;
-            if let Some(pin_ref) = led_unlocked.as_mut() {
-                pin_ref.toggle();
-            }
-        }
-        ticker.next().await;
+        if (duration == 0) || (duration > 20000)  {add = -1*add;} 
+        duration = duration + add;
+
+        pwm_pio.write(Duration::from_micros(duration as u64));
+        Timer::after_millis(1).await;
     }
 }
