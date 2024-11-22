@@ -5,8 +5,12 @@
 
 mod resources;
 mod tasks;
+mod builder;
 
+use crate::builder::ServoBuilder;
 use crate::tasks::fade::fade;
+use crate::tasks::servo::servo;
+
 use resources::gpio_list::{AssignedResources, LedFadeResources, ServoResources, ADCResources};
 use embassy_executor::Spawner;
 use embassy_rp::config::Config;
