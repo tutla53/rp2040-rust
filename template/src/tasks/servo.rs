@@ -1,8 +1,12 @@
-use crate::resources::gpio_list::ServoResources;
+//! This example shows how to create a pwm using the PIO module in the RP2040 chip.
+
+use crate::resources::gpio_list::Irqs;
 use crate::builder::servo_builder::ServoBuilder;
 
 use core::time::Duration;
-use embassy_rp::pwm::{Config, Pwm};
+
+use embassy_rp::pio::Pio;
+use embassy_rp::pio_programs::pwm::{PioPwm, PioPwmProgram};
 use embassy_time::Timer;
 
 const SERVO_FREQ: u32 = 50;

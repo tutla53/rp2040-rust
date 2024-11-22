@@ -1,36 +1,39 @@
-use embassy_rp::pwm::{Config, Pwm, SetDutyCycle};
+//! This example shows how to create a pwm using the PIO module in the RP2040 chip.
+
 use core::time::Duration;
+
+use embassy_rp::bind_interrupts;
+use embassy_rp::pio::{Instance, Pio};
+use embassy_rp::pio_programs::pwm::{PioPwm, PioPwmProgram};
+use embassy_time::Timer;
 use {defmt_rtt as _, panic_probe as _};
 
-const DEFAULT_SERVO_FREQ: u32 = 50; //Hertz
-const SERVO_PERIOD: u16 = 20_000; //ns
-const DEFAULT_MIN_PULSE_WIDTH: u64 = 1000; //us 
-const DEFAULT_MAX_PULSE_WIDTH: u64 = 2000;  //us
-const DEFAULT_MAX_DEGREE_ROTATION: u64 = 180; //degree
+const DEFAULT_MIN_PULSE_WIDTH: u64 = 1000; // uncalibrated default, the shortest duty cycle sent to a servo
+const DEFAULT_MAX_PULSE_WIDTH: u64 = 2000; // uncalibrated default, the longest duty cycle sent to a servo
+const DEFAULT_MAX_DEGREE_ROTATION: u64 = 160; // 160 degrees is typical
+const REFRESH_INTERVAL: u64 = 20000; // The period of each cycle
 
-pub struct ServoBuilder<'d> {
-    pwm: Pwm<'d>,
-    cfg: Config,
-    freq: u32,
+pub struct ServoBuilder<'d, T: Instance, const SM: usize> {
+    pwm: PioPwm<'d, T, SM>,
+    period: Duration,
     min_pulse_width: Duration,
     max_pulse_width: Duration,
     max_degree_rotation: u64,
 }
 
-impl<'d> ServoBuilder<'d> {
-    pub fn new(pwm: Pwm<'d>) -> Self {
+impl<'d, T: Instance, const SM: usize> ServoBuilder<'d, T, SM> {
+    pub fn new(pwm: PioPwm<'d, T, SM>) -> Self {
         Self {
             pwm,
-            cfg: Config::default(),
-            freq: DEFAULT_SERVO_FREQ,
+            period: Duration::from_micros(REFRESH_INTERVAL),
             min_pulse_width: Duration::from_micros(DEFAULT_MIN_PULSE_WIDTH),
             max_pulse_width: Duration::from_micros(DEFAULT_MAX_PULSE_WIDTH),
             max_degree_rotation: DEFAULT_MAX_DEGREE_ROTATION,
         }
     }
 
-    pub fn set_servo_freq(mut self, freq: u32) -> Self {
-        self.freq = freq;
+    pub fn set_period(mut self, duration: Duration) -> Self {
+        self.period = duration;
         self
     }
 
@@ -49,15 +52,10 @@ impl<'d> ServoBuilder<'d> {
         self
     }
 
-    pub fn build(mut self) -> Servo<'d> {
-        
-        let clock_freq = embassy_rp::clocks::clk_sys_freq();
-        self.cfg.top = (clock_freq / self.freq) as u16 - 1;
-        self.pwm.set_config(&self.cfg);
-
+    pub fn build(mut self) -> Servo<'d, T, SM> {
+        self.pwm.set_period(self.period);
         Servo {
             pwm: self.pwm,
-            cfg: self.cfg,
             min_pulse_width: self.min_pulse_width,
             max_pulse_width: self.max_pulse_width,
             max_degree_rotation: self.max_degree_rotation,
@@ -65,38 +63,35 @@ impl<'d> ServoBuilder<'d> {
     }
 }
 
-pub struct Servo<'d> {
-    pwm: Pwm<'d>,
-    cfg: Config,
+pub struct Servo<'d, T: Instance, const SM: usize> {
+    pwm: PioPwm<'d, T, SM>,
     min_pulse_width: Duration,
     max_pulse_width: Duration,
     max_degree_rotation: u64,
 }
 
-impl<'d> Servo<'d> {
-    pub fn enable(&mut self) {
-        self.cfg.enable = true;
-        self.pwm.set_config(&self.cfg);
+impl<'d, T: Instance, const SM: usize> Servo<'d, T, SM> {
+    pub fn start(&mut self) {
+        self.pwm.start();
     }
 
-    pub fn disable(&mut self) {
-        self.cfg.enable = false;
-        self.pwm.set_config(&self.cfg);
+    pub fn stop(&mut self) {
+        self.pwm.stop();
     }
 
-    pub fn set_servo_duty(&mut self, percent: u8) {
-        self.pwm.set_duty_cycle_percent(percent).unwrap();
+    pub fn write_time(&mut self, duration: Duration) {
+        self.pwm.write(duration);
     }
 
     pub fn rotate(&mut self, degree: u64) {
-        let micro_second_per_degree = (self.max_pulse_width.as_micros() as u64 - self.min_pulse_width.as_micros() as u64)
+        let degree_per_nano_second = (self.max_pulse_width.as_nanos() as u64 - self.min_pulse_width.as_nanos() as u64)
             / self.max_degree_rotation;
         let mut duration =
-            Duration::from_micros(degree * micro_second_per_degree + self.min_pulse_width.as_micros() as u64);
+            Duration::from_nanos(degree * degree_per_nano_second + self.min_pulse_width.as_nanos() as u64);
         if self.max_pulse_width < duration {
             duration = self.max_pulse_width;
         }
 
-        self.pwm.set_duty_cycle_fraction(duration.as_micros() as u16, SERVO_PERIOD).unwrap();
+        self.pwm.write(duration);
     }
 }
