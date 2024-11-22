@@ -1,41 +1,22 @@
-//! This example shows how to create a pwm using the PIO module in the RP2040 chip.
+//! Main
 
 #![no_std]
 #![no_main]
-use core::time::Duration;
 
+mod resources;
+mod tasks;
+
+use crate::tasks::fade::fade;
+use resources::gpio_list::{AssignedResources, LedFadeResources, ServoResources, ADCResources};
 use embassy_executor::Spawner;
-use embassy_rp::bind_interrupts;
-use embassy_rp::peripherals::PIO0;
-use embassy_rp::pio::{InterruptHandler, Pio};
-use embassy_rp::pio_programs::pwm::{PioPwm, PioPwmProgram};
-use embassy_time::Timer;
+use embassy_rp::config::Config;
 use {defmt_rtt as _, panic_probe as _};
 
-const REFRESH_INTERVAL: u64 = 20000;
-
-bind_interrupts!(struct Irqs {
-    PIO0_IRQ_0 => InterruptHandler<PIO0>;
-});
-
 #[embassy_executor::main]
-async fn main(_spawner: Spawner) {
-    let p = embassy_rp::init(Default::default());
-    let Pio { mut common, sm0, .. } = Pio::new(p.PIO0, Irqs);
+async fn main(spawner: Spawner){
+    let p = embassy_rp::init(Config::default());
+    let r = split_resources!(p);
 
-    // Note that PIN_25 is the led pin on the Pico
-    let prg = PioPwmProgram::new(&mut common);
-    let mut pwm_pio = PioPwm::new(&mut common, sm0, p.PIN_25, &prg);
-    pwm_pio.set_period(Duration::from_micros(REFRESH_INTERVAL));
-    pwm_pio.start();
+    spawner.spawn(fade(r.led_resources)).unwrap();
 
-    let mut add: i16 = 10;
-    let mut duration = add;
-    loop {
-        if (duration == 0) || (duration > 20000)  {add = -1*add;} 
-        duration = duration + add;
-
-        pwm_pio.write(Duration::from_micros(duration as u64));
-        Timer::after_millis(1).await;
-    }
 }
