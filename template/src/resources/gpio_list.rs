@@ -10,15 +10,11 @@ use embassy_rp::peripherals::PIO0;
 use embassy_rp::pio::InterruptHandler;
 use embassy_rp::bind_interrupts;
 
-// /*Hardware Setup*/
-// #define ADC_X_PIN           26 /*ADC 0*/
-// #define ADC_Y_PIN           27 /*ADC 1*/
-// #define ADC_SPEED_PIN       28 /*ADC 2*/
-
 assign_resources! {
     led_resources: LedFadeResources {
-       LED_PIN: PIN_25,
-       PIO_CH: PIO0, //Please change pheripherals ans Irqs to change this
+        LED_PIN: PIN_25,
+        LED_SLICE: PWM_SLICE4,
+        PIO_CH: PIO0, //Please change pheripherals ans Irqs to change this
     },
 
     servo_resources: ServoResources {
@@ -28,7 +24,7 @@ assign_resources! {
         SERVO_END_SLICE: PWM_SLICE2,
         SERVO_BASE_PIN: PIN_22,
         SERVO_BASE_SLICE: PWM_SLICE3,
-     },
+    },
     
     adc_resources: ADCResources{
         ADC_X_PIN: PIN_26,

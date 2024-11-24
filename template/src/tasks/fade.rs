@@ -1,5 +1,3 @@
-//! This example shows how to create a pwm using the PIO module in the RP2040 chip.
-
 use crate::resources::gpio_list::{LedFadeResources, Irqs};
 use core::time::Duration;
 use embassy_rp::pio::Pio;

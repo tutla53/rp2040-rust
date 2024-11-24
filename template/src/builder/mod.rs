@@ -1,1 +1,1 @@
-pub mod ServoBuilder;
+pub mod servo_builder;

@@ -7,7 +7,6 @@ mod resources;
 mod tasks;
 mod builder;
 
-use crate::builder::ServoBuilder;
 use crate::tasks::fade::fade;
 use crate::tasks::servo::servo;
 
@@ -22,5 +21,5 @@ async fn main(spawner: Spawner){
     let r = split_resources!(p);
 
     spawner.spawn(fade(r.led_resources)).unwrap();
-
+    spawner.spawn(servo(r.servo_resources)).unwrap();
 }
