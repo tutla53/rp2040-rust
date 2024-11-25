@@ -1,20 +1,18 @@
 use embassy_rp::pwm::{Config, Pwm, SetDutyCycle};
-use core::time::Duration;
 use {defmt_rtt as _, panic_probe as _};
 
 const DEFAULT_SERVO_FREQ: u32 = 50; //Hertz
-const SERVO_PERIOD: u16 = 20_000; //ns
-const DEFAULT_MIN_PULSE_WIDTH: u64 = 1000; //us 
-const DEFAULT_MAX_PULSE_WIDTH: u64 = 2000;  //us
-const DEFAULT_MAX_DEGREE_ROTATION: u64 = 180; //degree
+const DEFAULT_MIN_PULSE_WIDTH: u32 = 1000; //us 
+const DEFAULT_MAX_PULSE_WIDTH: u32 = 2000;  //us
+const DEFAULT_MAX_DEGREE_ROTATION: u8 = 180; //degree
 
 pub struct ServoBuilder<'d> {
     pwm: Pwm<'d>,
     cfg: Config,
-    freq: u32,
-    min_pulse_width: Duration,
-    max_pulse_width: Duration,
-    max_degree_rotation: u64,
+    freq: u32, 
+    min_pulse_width: u32,
+    max_pulse_width: u32,
+    max_degree_rotation: u8,
 }
 
 impl<'d> ServoBuilder<'d> {
@@ -23,8 +21,8 @@ impl<'d> ServoBuilder<'d> {
             pwm,
             cfg: Config::default(),
             freq: DEFAULT_SERVO_FREQ,
-            min_pulse_width: Duration::from_micros(DEFAULT_MIN_PULSE_WIDTH),
-            max_pulse_width: Duration::from_micros(DEFAULT_MAX_PULSE_WIDTH),
+            min_pulse_width: DEFAULT_MIN_PULSE_WIDTH,
+            max_pulse_width: DEFAULT_MAX_PULSE_WIDTH,
             max_degree_rotation: DEFAULT_MAX_DEGREE_ROTATION,
         }
     }
@@ -34,17 +32,17 @@ impl<'d> ServoBuilder<'d> {
         self
     }
 
-    pub fn set_min_pulse_width(mut self, duration: Duration) -> Self {
+    pub fn set_min_pulse_width(mut self, duration: u32) -> Self {
         self.min_pulse_width = duration;
         self
     }
 
-    pub fn set_max_pulse_width(mut self, duration: Duration) -> Self {
+    pub fn set_max_pulse_width(mut self, duration: u32) -> Self {
         self.max_pulse_width = duration;
         self
     }
 
-    pub fn set_max_degree_rotation(mut self, degree: u64) -> Self {
+    pub fn set_max_degree_rotation(mut self, degree: u8) -> Self {
         self.max_degree_rotation = degree;
         self
     }
@@ -58,6 +56,7 @@ impl<'d> ServoBuilder<'d> {
         Servo {
             pwm: self.pwm,
             cfg: self.cfg,
+            period: 1_000_000/self.freq,
             min_pulse_width: self.min_pulse_width,
             max_pulse_width: self.max_pulse_width,
             max_degree_rotation: self.max_degree_rotation,
@@ -68,9 +67,10 @@ impl<'d> ServoBuilder<'d> {
 pub struct Servo<'d> {
     pwm: Pwm<'d>,
     cfg: Config,
-    min_pulse_width: Duration,
-    max_pulse_width: Duration,
-    max_degree_rotation: u64,
+    period: u32,
+    min_pulse_width: u32,
+    max_pulse_width: u32,
+    max_degree_rotation: u8,
 }
 
 impl<'d> Servo<'d> {
@@ -84,15 +84,12 @@ impl<'d> Servo<'d> {
         self.pwm.set_config(&self.cfg);
     }
 
-    pub fn rotate(&mut self, degree: u64) {
-        let micro_second_per_degree = (self.max_pulse_width.as_micros() as u64 - self.min_pulse_width.as_micros() as u64)
-            / self.max_degree_rotation;
-        let mut duration =
-            Duration::from_micros(degree * micro_second_per_degree + self.min_pulse_width.as_micros() as u64);
-        if self.max_pulse_width < duration {
-            duration = self.max_pulse_width;
-        }
+    pub fn rotate(&mut self, degree: u32) {
+        let micro_second_per_degree = (self.max_pulse_width - self.min_pulse_width)/(self.max_degree_rotation as u32);
+        let mut duration = degree * micro_second_per_degree + self.min_pulse_width;
+        
+        if self.max_pulse_width < duration {duration = self.max_pulse_width;}
 
-        self.pwm.set_duty_cycle_fraction(duration.as_micros() as u16, SERVO_PERIOD).unwrap();
+        self.pwm.set_duty_cycle_fraction(duration as u16, self.period as u16).unwrap();
     }
 }
