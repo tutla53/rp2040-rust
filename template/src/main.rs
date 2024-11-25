@@ -7,7 +7,6 @@ mod resources;
 mod tasks;
 mod builder;
 
-use crate::builder::servo_builder;
 use crate::tasks::fade::fade;
 use crate::tasks::servo::servo;
 
