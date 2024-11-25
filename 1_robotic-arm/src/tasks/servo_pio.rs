@@ -41,8 +41,9 @@ pub async fn servo_pio(r: ServoPioResources) {
     head_servo.start();
 
     loop {
+        log::info!("Servo_PIO");
         body_servo.rotate(90);
         head_servo.rotate(180);
-        Timer::after_millis(100).await;
+        Timer::after_millis(1).await;
     }
 }

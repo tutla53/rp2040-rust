@@ -8,6 +8,7 @@ use embassy_rp::bind_interrupts;
 use embassy_rp::peripherals;
 use embassy_rp::adc::InterruptHandler as AdcInterruptHandler;
 use embassy_rp::pio::InterruptHandler as PioInterruptHandler;
+use embassy_rp::usb::InterruptHandler as UsbInterruptHandler;
 
 assign_resources! {
     led_resources: LedFadeResources {
@@ -42,5 +43,6 @@ bind_interrupts!(pub struct Irqs {
     ADC_IRQ_FIFO => AdcInterruptHandler;
     PIO0_IRQ_0 => PioInterruptHandler<peripherals::PIO0>;
     PIO1_IRQ_0 => PioInterruptHandler<peripherals::PIO1>;
+    USBCTRL_IRQ => UsbInterruptHandler<peripherals::USB>;
 });
 
