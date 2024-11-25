@@ -4,17 +4,16 @@
 //! It uses the `assign_resources` macro to allocate specific pins and peripherals to each component.
 
 use assign_resources::assign_resources;
-use embassy_rp::adc::InterruptHandler as AdcInterruptHandler;
-use embassy_rp::peripherals;
-use embassy_rp::peripherals::PIO0;
-use embassy_rp::pio::InterruptHandler;
 use embassy_rp::bind_interrupts;
+use embassy_rp::peripherals;
+use embassy_rp::adc::InterruptHandler as AdcInterruptHandler;
+use embassy_rp::pio::InterruptHandler as PioInterruptHandler;
 
 assign_resources! {
     led_resources: LedFadeResources {
         LED_PIN: PIN_25,
         LED_SLICE: PWM_SLICE4,
-        PIO_CH: PIO0, //Please change pheripherals ans Irqs to change this
+        PIO_CH: PIO0, //Please also change the Irqs to change this
     },
 
     servo_resources: ServoResources {
@@ -33,9 +32,8 @@ assign_resources! {
     },
 }
 
-
 bind_interrupts!(pub struct Irqs {
     ADC_IRQ_FIFO => AdcInterruptHandler;
-    PIO0_IRQ_0 => InterruptHandler<PIO0>;
+    PIO0_IRQ_0 => PioInterruptHandler<peripherals::PIO0>;
 });
 
