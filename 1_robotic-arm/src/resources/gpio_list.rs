@@ -13,7 +13,7 @@ assign_resources! {
     led_resources: LedFadeResources {
         LED_PIN: PIN_25,
         LED_SLICE: PWM_SLICE4,
-        PIO_CH: PIO0, //Please also change the Irqs to change this
+        PIO_CH: PIO0,
     },
 
     servo_resources: ServoResources {
@@ -23,6 +23,12 @@ assign_resources! {
         SERVO_END_SLICE: PWM_SLICE2,
         SERVO_BASE_PIN: PIN_22,
         SERVO_BASE_SLICE: PWM_SLICE3,
+    },
+
+    servo_pio_resources: ServoPioResources {
+        SERVO_BODY_PIN: PIN_10,
+        SERVO_HEAD_PIN: PIN_12,
+        SERVO_PIO_CH: PIO1,
     },
     
     adc_resources: ADCResources{
@@ -35,5 +41,6 @@ assign_resources! {
 bind_interrupts!(pub struct Irqs {
     ADC_IRQ_FIFO => AdcInterruptHandler;
     PIO0_IRQ_0 => PioInterruptHandler<peripherals::PIO0>;
+    PIO1_IRQ_0 => PioInterruptHandler<peripherals::PIO1>;
 });
 
