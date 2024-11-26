@@ -3,12 +3,16 @@
 //! This module defines the hardware resources used by various components of the robot.
 //! It uses the `assign_resources` macro to allocate specific pins and peripherals to each component.
 
-use assign_resources::assign_resources;
-use embassy_rp::bind_interrupts;
-use embassy_rp::peripherals;
-use embassy_rp::adc::InterruptHandler as AdcInterruptHandler;
-use embassy_rp::pio::InterruptHandler as PioInterruptHandler;
-use embassy_rp::usb::InterruptHandler as UsbInterruptHandler;
+use {
+    assign_resources::assign_resources,
+    embassy_rp::bind_interrupts,
+    embassy_rp::peripherals,
+    embassy_rp::{
+        adc::InterruptHandler as AdcInterruptHandler,
+        pio::InterruptHandler as PioInterruptHandler,
+        usb::InterruptHandler as UsbInterruptHandler,
+    },
+};
 
 assign_resources! {
     led_resources: LedFadeResources {

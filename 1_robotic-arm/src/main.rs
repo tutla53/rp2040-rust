@@ -7,23 +7,26 @@ mod resources;
 mod tasks;
 mod builder;
 
-use crate::tasks::fade::fade;
-use crate::tasks::servo::servo;
-use crate::tasks::servo_pio::servo_pio;
-use crate::resources::gpio_list::Irqs;
-
-use resources::gpio_list::{
-    AssignedResources, 
-    LedFadeResources, 
-    ServoResources,
-    ServoPioResources, 
-    ADCResources
+use {
+    crate::tasks::fade::fade,
+    crate::tasks::servo::servo,
+    crate::tasks::servo_pio::servo_pio,
+    crate::resources::gpio_list::{
+        Irqs,
+        AssignedResources, 
+        LedFadeResources, 
+        ServoResources,
+        ServoPioResources, 
+        ADCResources
+    },
+    embassy_executor::Spawner,
+    embassy_rp::{
+        config::Config,
+        usb::Driver,
+        peripherals::USB,
+    },
+    {defmt_rtt as _, panic_probe as _},
 };
-use embassy_executor::Spawner;
-use embassy_rp::config::Config;
-use embassy_rp::usb::Driver;
-use embassy_rp::peripherals::USB;
-use {defmt_rtt as _, panic_probe as _};
 
 #[embassy_executor::task]
 async fn logger_task(driver: Driver<'static, USB>) {

@@ -1,15 +1,18 @@
+//! Servo PWM Builder with PIO
 
-use core::time::Duration;
-
-use embassy_rp::pio::Instance;
-use embassy_rp::pio_programs::pwm::PioPwm;
-use {defmt_rtt as _, panic_probe as _};
-
+use {
+    core::time::Duration,
+    embassy_rp::{
+        pio::Instance,
+        pio_programs::pwm::PioPwm,
+    },
+    {defmt_rtt as _, panic_probe as _},
+};
+ 
 const DEFAULT_MIN_PULSE_WIDTH: u64 = 1000; // uncalibrated default, the shortest duty cycle sent to a servo
 const DEFAULT_MAX_PULSE_WIDTH: u64 = 2000; // uncalibrated default, the longest duty cycle sent to a servo
 const DEFAULT_MAX_DEGREE_ROTATION: u64 = 180; // 180 degrees is typical
 const REFRESH_INTERVAL: u64 = 20000; // The period of each cycle
-
 
 pub struct ServoPioBuilder<'d, T: Instance, const SM: usize> {
     pwm: PioPwm<'d, T, SM>,

@@ -1,9 +1,21 @@
-use crate::resources::gpio_list::{LedFadeResources, Irqs};
-use core::time::Duration;
-use embassy_rp::pio::Pio;
-use embassy_rp::pio_programs::pwm::{PioPwm, PioPwmProgram};
-use embassy_time::Timer;
-use {defmt_rtt as _, panic_probe as _};
+//! PWM PIO Task with Built-In LED
+
+use {
+    core::time::Duration,
+    crate::resources::gpio_list::{
+        LedFadeResources, 
+        Irqs,
+    },
+    embassy_rp::{
+        pio::Pio,
+        pio_programs::pwm::{
+            PioPwm, 
+            PioPwmProgram,
+        },
+    },
+    embassy_time::Timer,
+    {defmt_rtt as _, panic_probe as _},
+};
 
 const REFRESH_INTERVAL: u64 = 20000;
 
