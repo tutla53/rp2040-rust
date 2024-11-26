@@ -8,9 +8,11 @@ mod tasks;
 mod builder;
 
 use {
-    crate::tasks::fade::fade,
-    crate::tasks::servo::servo,
-    crate::tasks::servo_pio::servo_pio,
+    crate::tasks::{
+        fade::fade,
+        servo::servo,
+        servo_pio::servo_pio,
+    },
     crate::resources::gpio_list::{
         Irqs,
         AssignedResources, 

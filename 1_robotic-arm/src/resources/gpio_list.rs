@@ -5,9 +5,9 @@
 
 use {
     assign_resources::assign_resources,
-    embassy_rp::bind_interrupts,
-    embassy_rp::peripherals,
     embassy_rp::{
+        bind_interrupts,
+        peripherals,
         adc::InterruptHandler as AdcInterruptHandler,
         pio::InterruptHandler as PioInterruptHandler,
         usb::InterruptHandler as UsbInterruptHandler,
