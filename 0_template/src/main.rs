@@ -7,22 +7,28 @@ mod resources;
 mod tasks;
 mod builder;
 
-use crate::tasks::fade::fade;
-use crate::tasks::servo::servo;
-
-use crate::resources::gpio_list::{
-    Irqs,
-    AssignedResources, 
-    LedFadeResources, 
-    ServoResources, 
-    ADCResources
+use {
+    crate::tasks::{
+        fade::fade,
+        servo::servo,
+        servo_pio::servo_pio,
+    },
+    crate::resources::gpio_list::{
+        Irqs,
+        AssignedResources, 
+        LedFadeResources, 
+        ServoResources,
+        ServoPioResources, 
+        ADCResources
+    },
+    embassy_executor::Spawner,
+    embassy_rp::{
+        config::Config,
+        usb::Driver,
+        peripherals::USB,
+    },
+    {defmt_rtt as _, panic_probe as _},
 };
-
-use embassy_executor::Spawner;
-use embassy_rp::config::Config;
-use embassy_rp::usb::Driver;
-use embassy_rp::peripherals::USB;
-use {defmt_rtt as _, panic_probe as _};
 
 #[embassy_executor::task]
 async fn logger_task(driver: Driver<'static, USB>) {
@@ -39,4 +45,5 @@ async fn main(spawner: Spawner){
     spawner.spawn(logger_task(driver)).unwrap();
     spawner.spawn(fade(r.led_resources)).unwrap();
     spawner.spawn(servo(r.servo_resources)).unwrap();
+    spawner.spawn(servo_pio(r.servo_pio_resources)).unwrap();
 }

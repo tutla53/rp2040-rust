@@ -1,5 +1,13 @@
-use embassy_rp::pwm::{Config, Pwm, SetDutyCycle};
-use {defmt_rtt as _, panic_probe as _};
+//! Servo PWM Builder
+
+use {
+    embassy_rp::pwm::{
+        Config, 
+        Pwm, 
+        SetDutyCycle
+    },
+    {defmt_rtt as _, panic_probe as _},
+};
 
 const DEFAULT_SERVO_FREQ: u32 = 50; //Hertz
 const DEFAULT_MIN_PULSE_WIDTH: u32 = 1000; //us 

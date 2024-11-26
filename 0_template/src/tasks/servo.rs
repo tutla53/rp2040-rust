@@ -1,8 +1,14 @@
-use crate::resources::gpio_list::ServoResources;
-use crate::builder::servo_builder::ServoBuilder;
+//! Servo Task
 
-use embassy_rp::pwm::{Config, Pwm};
-use embassy_time::Timer;
+use {
+    crate::resources::gpio_list::ServoResources,
+    crate::builder::servo_builder::ServoBuilder,
+    embassy_rp::pwm::{
+        Config, 
+        Pwm
+    },
+    embassy_time::Timer,
+};
 
 const SERVO_FREQ: u32 = 50;
 

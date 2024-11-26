@@ -1,9 +1,11 @@
 [package]
 edition = "2021"
-name = "rp2040-embassy-rust"
+name = "rp2040-template"
 version = "0.1.0"
 license = "MIT OR Apache-2.0"
-
+authors = ["Tutla"]
+description = "Template for Raspberry Pi Pico + Embassy + Rust"
+repository = "https://github.com/tutla53/rp2040-rust"
 
 [dependencies]
 embassy-embedded-hal = { version = "0.2.0", path = "../embassy/embassy-embedded-hal", features = ["defmt"] }
