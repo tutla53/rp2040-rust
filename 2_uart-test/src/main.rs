@@ -1,58 +1,91 @@
-//! This example shows how to use UART (Universal asynchronous receiver-transmitter) in the RP2040 chip.
-//!
-//! No specific hardware is specified in this example. If you connect pin 0 and 1 you should get the same data back.
-//! The Raspberry Pi Debug Probe (https://www.raspberrypi.com/products/debug-probe/) could be used
-//! with its UART port.
 
 #![no_std]
 #![no_main]
+#![allow(async_fn_in_trait)]
 
-use defmt::*;
+use defmt::{info, panic, trace};
 use embassy_executor::Spawner;
-use embassy_rp::bind_interrupts;
-use embassy_rp::peripherals::UART0;
-use embassy_rp::uart::{BufferedInterruptHandler, BufferedUart, BufferedUartRx, Config};
-use embassy_time::Timer;
+use embassy_futures::join::join;
+use embassy_rp::peripherals::PIO1;
+use embassy_rp::pio_programs::uart::{PioUartRx, PioUartRxProgram, PioUartTx, PioUartTxProgram};
+use embassy_rp::{bind_interrupts, pio};
+use embassy_sync::blocking_mutex::raw::NoopRawMutex;
+use embassy_sync::pipe::Pipe;
+use embassy_usb::driver::EndpointError;
 use embedded_io_async::{Read, Write};
-use static_cell::StaticCell;
 use {defmt_rtt as _, panic_probe as _};
 
+//use crate::uart::PioUart;
+
 bind_interrupts!(struct Irqs {
-    UART0_IRQ => BufferedInterruptHandler<UART0>;
+    PIO1_IRQ_0 => pio::InterruptHandler<PIO1>;
 });
 
 #[embassy_executor::main]
-async fn main(spawner: Spawner) {
+async fn main(_spawner: Spawner) {
+    info!("Hello there!");
+
     let p = embassy_rp::init(Default::default());
-    let (tx_pin, rx_pin, uart) = (p.PIN_0, p.PIN_1, p.UART0);
 
-    static TX_BUF: StaticCell<[u8; 16]> = StaticCell::new();
-    let tx_buf = &mut TX_BUF.init([0; 16])[..];
-    static RX_BUF: StaticCell<[u8; 16]> = StaticCell::new();
-    let rx_buf = &mut RX_BUF.init([0; 16])[..];
-    let uart = BufferedUart::new(uart, Irqs, tx_pin, rx_pin, tx_buf, rx_buf, Config::default());
-    let (mut tx, rx) = uart.split();
+    // PIO UART setup
+    let pio::Pio {
+        mut common, sm0, sm1, ..
+    } = pio::Pio::new(p.PIO1, Irqs);
 
-    unwrap!(spawner.spawn(reader(rx)));
+    let tx_program = PioUartTxProgram::new(&mut common);
+    let mut uart_tx = PioUartTx::new(9600, &mut common, sm0, p.PIN_4, &tx_program);
 
-    info!("Writing...");
-    loop {
-        let data = [
-            1u8, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
-            29, 30, 31,
-        ];
-        info!("TX {:?}", data);
-        tx.write_all(&data).await.unwrap();
-        Timer::after_secs(1).await;
+    let rx_program = PioUartRxProgram::new(&mut common);
+    let mut uart_rx = PioUartRx::new(9600, &mut common, sm1, p.PIN_5, &rx_program);
+
+    // Pipe setup
+    let mut uart_pipe: Pipe<NoopRawMutex, 20> = Pipe::new();
+    let (mut uart_pipe_reader, mut uart_pipe_writer) = uart_pipe.split();
+
+    // Read + write from UART
+    let _ = join(
+        uart_read(&mut uart_rx, &mut uart_pipe_writer),
+        uart_write(&mut uart_tx, &mut uart_pipe_reader),
+    );
+
+}
+
+struct Disconnected {}
+
+impl From<EndpointError> for Disconnected {
+    fn from(val: EndpointError) -> Self {
+        match val {
+            EndpointError::BufferOverflow => panic!("Buffer overflow"),
+            EndpointError::Disabled => Disconnected {},
+        }
     }
 }
 
-#[embassy_executor::task]
-async fn reader(mut rx: BufferedUartRx<'static, UART0>) {
-    info!("Reading...");
+/// Read from the UART and write it to the USB TX pipe
+async fn uart_read<PIO: pio::Instance, const SM: usize>(
+    uart_rx: &mut PioUartRx<'_, PIO, SM>,
+    uart_pipe_writer: &mut embassy_sync::pipe::Writer<'_, NoopRawMutex, 20>,) -> ! {
+    let mut buf = [0; 64];
     loop {
-        let mut buf = [0; 31];
-        rx.read_exact(&mut buf).await.unwrap();
-        info!("RX {:?}", buf);
+        let n = uart_rx.read(&mut buf).await.expect("UART read error");
+        if n == 0 {
+            continue;
+        }
+        let data = &buf[..n];
+        trace!("UART IN: {:x}", buf);
+        (*uart_pipe_writer).write(data).await;
+    }
+}
+
+/// Read from the UART TX pipe and write it to the UART
+async fn uart_write<PIO: pio::Instance, const SM: usize>(
+    uart_tx: &mut PioUartTx<'_, PIO, SM>,
+    uart_pipe_reader: &mut embassy_sync::pipe::Reader<'_, NoopRawMutex, 20>,) -> ! {
+    let mut buf = [0; 64];
+    loop {
+        let n = (*uart_pipe_reader).read(&mut buf).await;
+        let data = &buf[..n];
+        trace!("UART OUT: {:x}", data);
+        let _ = uart_tx.write(&data).await;
     }
 }
