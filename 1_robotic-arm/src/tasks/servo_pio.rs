@@ -79,6 +79,12 @@ pub async fn servo_pio(r: ServoPioResources) {
             _ => {}
         }
 
+        if head_degree<0 {head_degree = 0;}
+        else if head_degree>180{head_degree = 180;}
+        
+        if body_degree<0 {body_degree = 0;}
+        else if body_degree>180{body_degree = 180;}
+
         body_servo.rotate(body_degree as u64);
         head_servo.rotate(head_degree as u64);
     }
