@@ -11,6 +11,7 @@ use {
         adc::InterruptHandler as AdcInterruptHandler,
         pio::InterruptHandler as PioInterruptHandler,
         usb::InterruptHandler as UsbInterruptHandler,
+        uart::InterruptHandler as UARTInterruptHandler,
     },
 };
 
@@ -34,6 +35,8 @@ assign_resources! {
         SERVO_BODY_PIN: PIN_10,
         SERVO_HEAD_PIN: PIN_12,
         SERVO_PIO_CH: PIO1,
+        UART_TX_PIN: PIN_4,
+        UART_RX_PIN: PIN_5,
     },
     
     adc_resources: ADCResources{
@@ -41,6 +44,7 @@ assign_resources! {
         ADC_Y_PIN: PIN_27,
         ADC_SPEED_PIN: PIN_28,
     },
+
 }
 
 bind_interrupts!(pub struct Irqs {
@@ -48,5 +52,6 @@ bind_interrupts!(pub struct Irqs {
     PIO0_IRQ_0 => PioInterruptHandler<peripherals::PIO0>;
     PIO1_IRQ_0 => PioInterruptHandler<peripherals::PIO1>;
     USBCTRL_IRQ => UsbInterruptHandler<peripherals::USB>;
+    UART1_IRQ => UARTInterruptHandler<peripherals::UART1>;
 });
 

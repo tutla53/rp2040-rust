@@ -19,7 +19,7 @@ use {
         LedFadeResources, 
         ServoResources,
         ServoPioResources, 
-        ADCResources
+        ADCResources,
     },
     embassy_executor::Spawner,
     embassy_rp::{
