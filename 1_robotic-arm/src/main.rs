@@ -10,16 +10,13 @@ mod builder;
 use {
     crate::tasks::{
         fade::fade,
-        servo::servo,
         servo_pio::servo_pio,
     },
     crate::resources::gpio_list::{
         Irqs,
         AssignedResources, 
         LedFadeResources, 
-        ServoResources,
         ServoPioResources, 
-        ADCResources,
     },
     embassy_executor::Spawner,
     embassy_rp::{
@@ -44,6 +41,5 @@ async fn main(spawner: Spawner){
 
     spawner.spawn(logger_task(driver)).unwrap();
     spawner.spawn(fade(r.led_resources)).unwrap();
-    spawner.spawn(servo(r.servo_resources)).unwrap();
     spawner.spawn(servo_pio(r.servo_pio_resources)).unwrap();
 }

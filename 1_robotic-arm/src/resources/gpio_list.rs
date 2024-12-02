@@ -8,10 +8,8 @@ use {
     embassy_rp::{
         bind_interrupts,
         peripherals,
-        adc::InterruptHandler as AdcInterruptHandler,
         pio::InterruptHandler as PioInterruptHandler,
         usb::InterruptHandler as UsbInterruptHandler,
-        uart::InterruptHandler as UARTInterruptHandler,
     },
 };
 
@@ -22,15 +20,6 @@ assign_resources! {
         PIO_CH: PIO0,
     },
 
-    servo_resources: ServoResources {
-        SERVO_MID_PIN: PIN_18,
-        SERVO_MID_SLICE: PWM_SLICE1,
-        SERVO_END_PIN: PIN_20,
-        SERVO_END_SLICE: PWM_SLICE2,
-        SERVO_BASE_PIN: PIN_22,
-        SERVO_BASE_SLICE: PWM_SLICE3,
-    },
-
     servo_pio_resources: ServoPioResources {
         SERVO_BODY_PIN: PIN_10,
         SERVO_HEAD_PIN: PIN_12,
@@ -38,20 +27,11 @@ assign_resources! {
         UART_TX_PIN: PIN_4,
         UART_RX_PIN: PIN_5,
     },
-    
-    adc_resources: ADCResources{
-        ADC_X_PIN: PIN_26,
-        ADC_Y_PIN: PIN_27,
-        ADC_SPEED_PIN: PIN_28,
-    },
-
 }
 
 bind_interrupts!(pub struct Irqs {
-    ADC_IRQ_FIFO => AdcInterruptHandler;
     PIO0_IRQ_0 => PioInterruptHandler<peripherals::PIO0>;
     PIO1_IRQ_0 => PioInterruptHandler<peripherals::PIO1>;
     USBCTRL_IRQ => UsbInterruptHandler<peripherals::USB>;
-    UART1_IRQ => UARTInterruptHandler<peripherals::UART1>;
 });
 

@@ -16,9 +16,7 @@ use {
             },
             uart::{
                 PioUartRx,
-                PioUartTx,
                 PioUartRxProgram,
-                PioUartTxProgram,
             },
         },
     },
@@ -30,13 +28,11 @@ const REFRESH_INTERVAL: u64 = 20000;
 
 #[embassy_executor::task]
 pub async fn servo_pio(r: ServoPioResources) {
-    let Pio { mut common, sm0, sm1, sm2, sm3, .. } = Pio::new(r.SERVO_PIO_CH, Irqs);
+    let Pio { mut common, sm0, sm1, sm2, .. } = Pio::new(r.SERVO_PIO_CH, Irqs);
     let prg = PioPwmProgram::new(&mut common);
-    let tx_program = PioUartTxProgram::new(&mut common);
     let rx_program = PioUartRxProgram::new(&mut common);
 
-    let mut uart_tx = PioUartTx::new(9600, &mut common, sm2, r.UART_TX_PIN, &tx_program);
-    let mut uart_rx = PioUartRx::new(9600, &mut common, sm3, r.UART_RX_PIN, &rx_program);
+    let mut uart_rx = PioUartRx::new(9600, &mut common, sm2, r.UART_RX_PIN, &rx_program);
 
     let body_pwm_pio = PioPwm::new(&mut common, sm0, r.SERVO_BODY_PIN, &prg);
     let head_pwm_pio = PioPwm::new(&mut common, sm1, r.SERVO_HEAD_PIN, &prg);
@@ -69,7 +65,6 @@ pub async fn servo_pio(r: ServoPioResources) {
 
     loop {
         let n = uart_rx.read_u8().await;
-        uart_tx.write_u8(n).await;
 
         match n {
             b'w' => {head_degree = head_degree + inc;},
