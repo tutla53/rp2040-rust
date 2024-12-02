@@ -15,16 +15,14 @@ use {
 
 assign_resources! {
     led_resources: LedFadeResources {
-        LED_PIN: PIN_25,
-        LED_SLICE: PWM_SLICE4,
         PIO_CH: PIO0,
+        LED_PIN: PIN_25,
     },
 
     servo_pio_resources: ServoPioResources {
+        SERVO_PIO_CH: PIO1,
         SERVO_BODY_PIN: PIN_10,
         SERVO_HEAD_PIN: PIN_12,
-        SERVO_PIO_CH: PIO1,
-        UART_TX_PIN: PIN_4,
         UART_RX_PIN: PIN_5,
     },
 }
