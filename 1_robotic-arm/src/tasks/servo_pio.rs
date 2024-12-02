@@ -82,5 +82,7 @@ pub async fn servo_pio(r: ServoPioResources) {
 
         body_servo.rotate(body_degree as u64);
         head_servo.rotate(head_degree as u64);
+
+        Timer::after_micros(100).await;
     }
 }
