@@ -86,12 +86,12 @@ cargo run --bin blinky --release # Example to run blinky.rs
 ### Project Structure
 
 ```bash
-.                                                                                                                                                                                                                  ├── 
+.
+├── main.rs                                                                                                                                                                  ├── 
 ├── builder
 │   ├── mod.rs
 │   ├── servo_builder.rs
 │   └── servo_pio_builder.rs
-├── main.rs
 ├── resources
 │   ├── gpio_list.rs
 │   └── mod.rs
