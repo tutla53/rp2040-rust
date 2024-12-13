@@ -23,9 +23,9 @@
   ```
   
 ### Installing the Module  
-Move to the Project Directory e.g. `0_template`:
+Move to the Project Directory `template`:
 ```bash
-cd rp2040-rust/0_template/
+cd rp2040-rust/template/
 ```
 
 #### Adding the Build Target
@@ -73,5 +73,31 @@ cargo run --release
 
 The compiled `elf` and `uf2` file will be in the `target/thumbv6m-none-eabi/release/rp2040-template`
 
+#### Run the Example from embassy-rs
+You can run the example from the embassy-rs which located at `src/bin` by using this following command:
+```bash
+cargo run --bin {project_name} --release
+```
+```bash
+cargo run --bin blinky --release # Example to run blinky.rs
+```
 
+## How to Use the Template
+### Project Structure
 
+```bash
+.                                                                                                                                                                                                                  ├── 
+├── builder
+│   ├── mod.rs
+│   ├── servo_builder.rs
+│   └── servo_pio_builder.rs
+├── main.rs
+├── resources
+│   ├── gpio_list.rs
+│   └── mod.rs
+└── tasks
+    ├── fade.rs
+    ├── mod.rs
+    ├── servo_pio.rs
+    └── servo.rs
+```
