@@ -29,16 +29,19 @@ cd rp2040-rust/0_template/
 ```
 
 #### Adding the Build Target
-- Run this following command to add the build target:
-  ```bash
-  rustup target add thumbv6m-none-eabi
-  ```
+Run this following command to add the build target:
+```bash
+rustup target add thumbv6m-none-eabi
+```
   
 #### Adding probe-rs Package
 ##### Installation
   ```bash
-  cargo add probe-rs
+  curl --proto '=https' --tlsv1.2 -LsSf https://github.com/probe-rs/probe-rs/releases/latest/download/probe-rs-tools-installer.sh | sh
   ```
+| :warning: WARNING          |
+|:---------------------------|
+|Don't run `cargo add probe-rs`|
 #### Installing elf2uf2-rs Package
 
 ##### Dependency
@@ -49,6 +52,26 @@ cd rp2040-rust/0_template/
   ```bash
   cargo install elf2uf2-rs
   ```
+### Build and Run the First Program
+#### Build
+  ```bash
+  cargo build --release
+  ```
+
+#### Run 
+Please select one of the runner on the `.cargo/config.toml`
+```toml
+[target.'cfg(all(target_arch = "arm", target_os = "none"))']
+runner = "probe-rs run --chip RP2040"  # Directly Flash with Debug Probe
+runner = "elf2uf2-rs -d"               # Automatic deployment to a mounted Pico
+runner = "elf2uf2-rs"                  # Only create uf2 file and can be flashed to pico by pressing the bootsel button
+```
+The run the following code:
+```bash
+cargo run --release
+```
+
+The compiled `elf` and `uf2` file will be in the `target/thumbv6m-none-eabi/release/rp2040-template`
 
 
 
