@@ -41,7 +41,7 @@ rustup target add thumbv6m-none-eabi
   ```
 | :warning: WARNING          |
 |:---------------------------|
-|Don't run `cargo add probe-rs`|
+|Make sure that you didn’t accidentally run `cargo add probe-rs` (which adds it as a dependency) instead of correctly installing probe-rs|
 #### Installing elf2uf2-rs Package
 
 ##### Dependency
